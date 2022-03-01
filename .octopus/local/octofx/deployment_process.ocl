@@ -222,30 +222,25 @@ step "Verify Application" {
     }
 }
 
-step "Notify Stakeholders" {
-    condition = "Always"
+step "Notify Everyone of Deployment" {
 
     action {
-        action_type = "Octopus.Email"
         notes = <<-EOT
                 **Always Runs**
                 
-                Send an email to the stakeholders informing them of the result of the deployment.  Will run even if an error occurs.
+                Will notify everyone in slack who might be interested in the deployment.
             EOT
         properties = {
-            Octopus.Action.Email.Body = <<-EOT
-                The #{Octopus.Project.Name} deployment to #{Octopus.Environment.Name} #{If Octopus.Deployment.Error}failed#{else}completed successfully#{/if}
-                
-                #{Octopus.Web.ServerUri}/app#/#{Octopus.Space.Id}/tasks/#{Octopus.Task.Id}
-                
-                #{if Octopus.Deployment.Error}
-                #{Octopus.Deployment.Error}
-                #{/if}
-            EOT
-            Octopus.Action.Email.IsHtml = "False"
-            Octopus.Action.Email.Subject = "#{Octopus.Project.Name} deployment to #{Octopus.Environment.Name} #{If Octopus.Deployment.Error}failed#{else}completed successfully#{/if}"
-            Octopus.Action.Email.ToTeamIds = "Octopus Managers"
-            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Template.Id = "ActionTemplates-521"
+            Octopus.Action.Template.Version = "12"
+            ssn_Channel = "#{Notification.Slack.Channel}"
+            ssn_Color = "#{Notification.Slack.Color}"
+            ssn_HookUrl = "#{Notification.Slack.Url}"
+            ssn_IconUrl = "https://octopus.com/content/resources/favicon.png"
+            ssn_Message = "#{Notification.Slack.Status.Message}"
+            ssn_Title = "#{Notification.Slack.Status.Title}"
+            ssn_Username = "Octopus Deploy"
         }
+        worker_pool = "Default Worker Pool"
     }
 }
