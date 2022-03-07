@@ -47,6 +47,107 @@ step "Run Database Creation Runbook" {
     }
 }
 
+step "Generate Delta Script" {
+    condition = "Variable"
+    properties = {
+        Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Deployment.Error}#{Octopus.Action[Calculate Deployment Mode].Output.RunOnDeploy}#{/unless}"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        notes = <<-EOT
+                **Runs on Deployments only**
+                
+                Deploys the changes to the OctoFX database.
+            EOT
+        properties = {
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                $packagePath = $OctopusParameters["Octopus.Action.Package[sakila.mssql.dbup.db].ExtractedPath"]
+                $connectionString = $OctopusParameters["Project.Database.ConnectionString"]
+                $reportPath = $OctopusParameters["Project.HtmlReport.Location"]
+                $environmentName = $OctopusParameters["Octopus.Environment.Name"]
+                
+                $dllToRun = "$packagePath/sakila.mssql.dbup.dll"
+                $generatedReport = "$reportPath/UpgradeReport.html"
+                
+                if ((test-path $reportPath) -eq $false){
+                	New-Item $reportPath -ItemType "directory"
+                }
+                
+                dotnet $dllToRun --ConnectionString="$connectionString" --PreviewReportPath="$reportPath"
+                
+                New-OctopusArtifact -Path "$generatedReport" -Name "$environmentName.UpgradeReport.html"
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+        worker_pool = "Default Worker Pool"
+
+        packages "sakila.mssql.dbup.db" {
+            acquisition_location = "Server"
+            feed = "Octopus Server (built-in)"
+            package_id = "sakila.mssql.dbup.db"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "Verify Delta Script" {
+    condition = "Variable"
+    properties = {
+        Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Deployment.Error}#{Octopus.Action[Calculate Deployment Mode].Output.RunOnDeploy}#{/unless}"
+    }
+
+    action {
+        action_type = "Octopus.Manual"
+        environments = ["Production"]
+        notes = <<-EOT
+                **Runs on Deployments Only**
+                
+                Pause the deployment and verify everything is running correctly.
+            EOT
+        properties = {
+            Octopus.Action.Manual.BlockConcurrentDeployments = "False"
+            Octopus.Action.Manual.Instructions = "Please log on to www.#{Application.Website.Name}.com and verify the application is running correctly."
+            Octopus.Action.Manual.ResponsibleTeamIds = "Octopus Administrators,Octopus Managers"
+            Octopus.Action.RunOnServer = "false"
+        }
+    }
+}
+
+step "Deploy Database Changes" {
+    condition = "Variable"
+    properties = {
+        Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Deployment.Error}#{Octopus.Action[Calculate Deployment Mode].Output.RunOnDeploy}#{/unless}"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        notes = <<-EOT
+                **Runs on Deployments only**
+                
+                Deploys the changes to the OctoFX database.
+            EOT
+        properties = {
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                $packagePath = $OctopusParameters["Octopus.Action.Package[sakila.mssql.dbup.db].ExtractedPath"]
+                $connectionString = $OctopusParameters["Project.Database.ConnectionString"]
+                
+                $dllToRun = "$packagePath/sakila.mssql.dbup.dll"
+                
+                dotnet $dllToRun --ConnectionString="$connectionString"
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+        worker_pool = "Default Worker Pool"
+    }
+}
+
 step "Deploy OctoFX Database" {
     condition = "Variable"
     properties = {
@@ -56,6 +157,7 @@ step "Deploy OctoFX Database" {
 
     action {
         action_type = "Octopus.TentaclePackage"
+        is_disabled = true
         notes = <<-EOT
                 **Runs on Deployments only**
                 
@@ -171,29 +273,6 @@ step "Deploy OctoFX Website" {
             properties = {
                 SelectionMode = "immediate"
             }
-        }
-    }
-}
-
-step "Verify Application" {
-    condition = "Variable"
-    properties = {
-        Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Deployment.Error}#{Octopus.Action[Calculate Deployment Mode].Output.RunOnDeployOrRollback}#{/unless}"
-    }
-
-    action {
-        action_type = "Octopus.Manual"
-        environments = ["Production"]
-        notes = <<-EOT
-                **Runs on Deployments and Rollbacks**
-                
-                Pause the deployment and verify everything is running correctly.
-            EOT
-        properties = {
-            Octopus.Action.Manual.BlockConcurrentDeployments = "False"
-            Octopus.Action.Manual.Instructions = "Please log on to www.#{Application.Website.Name}.com and verify the application is running correctly."
-            Octopus.Action.Manual.ResponsibleTeamIds = "Octopus Administrators,Octopus Managers"
-            Octopus.Action.RunOnServer = "false"
         }
     }
 }
