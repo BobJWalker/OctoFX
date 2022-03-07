@@ -47,7 +47,7 @@ step "Run Database Creation Runbook" {
     }
 }
 
-step "Generate Delta Script" {
+step "Generate Database Delta Report" {
     condition = "Variable"
     properties = {
         Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Deployment.Error}#{Octopus.Action[Calculate Deployment Mode].Output.RunOnDeploy}#{/unless}"
@@ -96,7 +96,7 @@ step "Generate Delta Script" {
     }
 }
 
-step "Verify Delta Script" {
+step "Verify Database Delta Report" {
     condition = "Variable"
     properties = {
         Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Deployment.Error}#{Octopus.Action[Calculate Deployment Mode].Output.RunOnDeploy}#{/unless}"
@@ -112,14 +112,14 @@ step "Verify Delta Script" {
             EOT
         properties = {
             Octopus.Action.Manual.BlockConcurrentDeployments = "False"
-            Octopus.Action.Manual.Instructions = "Please log on to www.#{Application.Website.Name}.com and verify the application is running correctly."
+            Octopus.Action.Manual.Instructions = "Please review the database delta report artifact."
             Octopus.Action.Manual.ResponsibleTeamIds = "Octopus Administrators,Octopus Managers"
             Octopus.Action.RunOnServer = "false"
         }
     }
 }
 
-step "Deploy Database Changes" {
+step "Deploy OctoFX Database" {
     condition = "Variable"
     properties = {
         Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Deployment.Error}#{Octopus.Action[Calculate Deployment Mode].Output.RunOnDeploy}#{/unless}"
@@ -146,43 +146,6 @@ step "Deploy Database Changes" {
             Octopus.Action.Script.Syntax = "PowerShell"
         }
         worker_pool = "Default Worker Pool"
-    }
-}
-
-step "Deploy OctoFX Database" {
-    condition = "Variable"
-    properties = {
-        Octopus.Action.TargetRoles = "octofx-database"
-        Octopus.Step.ConditionVariableExpression = "#{unless Octopus.Deployment.Error}#{Octopus.Action[Calculate Deployment Mode].Output.RunOnDeploy}#{/unless}"
-    }
-
-    action {
-        action_type = "Octopus.TentaclePackage"
-        is_disabled = true
-        notes = <<-EOT
-                **Runs on Deployments only**
-                
-                Deploys the changes to the OctoFX database.
-            EOT
-        properties = {
-            Octopus.Action.EnabledFeatures = ",Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "True"
-            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "True"
-            Octopus.Action.Package.DownloadOnTentacle = "False"
-            Octopus.Action.Package.FeedId = "Octopus Server (built-in)"
-            Octopus.Action.Package.PackageId = "OctoFX.Database"
-            Octopus.Action.RunOnServer = "false"
-        }
-        worker_pool_variable = ""
-
-        packages {
-            acquisition_location = "Server"
-            feed = "Octopus Server (built-in)"
-            package_id = "OctoFX.Database"
-            properties = {
-                SelectionMode = "immediate"
-            }
-        }
     }
 }
 
