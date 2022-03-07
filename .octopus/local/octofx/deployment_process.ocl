@@ -139,6 +139,7 @@ step "Deploy Database Changes" {
                 
                 $dllToRun = "$packagePath/sakila.mssql.dbup.dll"
                 
+                # How you run this .NET core app
                 dotnet $dllToRun --ConnectionString="$connectionString"
             EOT
             Octopus.Action.Script.ScriptSource = "Inline"
