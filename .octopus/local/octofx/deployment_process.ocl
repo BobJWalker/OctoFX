@@ -113,7 +113,7 @@ step "Verify Database Delta Report" {
         properties = {
             Octopus.Action.Manual.BlockConcurrentDeployments = "False"
             Octopus.Action.Manual.Instructions = "Please review the database delta report artifact."
-            Octopus.Action.Manual.ResponsibleTeamIds = "Octopus Administrators,Octopus Managers"
+            Octopus.Action.Manual.ResponsibleTeamIds = "Octopus Administrators,Octopus Managers,DBA"
             Octopus.Action.RunOnServer = "false"
         }
     }
