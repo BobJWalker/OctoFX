@@ -146,6 +146,17 @@ step "Deploy OctoFX Database" {
             Octopus.Action.Script.Syntax = "PowerShell"
         }
         worker_pool = "Default Worker Pool"
+
+        packages "sakila.mssql.dbup.db" {
+            acquisition_location = "Server"
+            feed = "Octopus Server (built-in)"
+            package_id = "sakila.mssql.dbup.db"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
     }
 }
 
