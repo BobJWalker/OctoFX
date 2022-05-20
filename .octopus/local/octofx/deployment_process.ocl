@@ -252,7 +252,7 @@ step "Deploy OctoFX Website" {
     }
 }
 
-step "Auto Rollback" {
+step "Check if rollback is needed" {
     condition = "Always"
 
     action {
