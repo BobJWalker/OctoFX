@@ -374,7 +374,7 @@ step "Check if rollback is needed" {
                     exit 0
                 }
                 
-                $lastSuccessfulTaskUrl = "$OctopusUrl/api/tasks?skip=0&take=2&environment=$environmentId&project=$projectId&states=Success&spaces=$spaceId&includeSystem=false"
+                $lastSuccessfulTaskUrl = "$OctopusUrl/api/tasks?skip=0&take=2&environment=$environmentId&project=$projectId&states=Success&spaces=$spaceId&includeSystem=false&name=Deploy"
                 Write-Host "Querying the url $lastSuccessfulTaskUrl to find the last successful deployment that went to this environment"
                 $lastSuccessfulTaskResponse = Invoke-RestMethod $lastSuccessfulTaskUrl -headers $header
                 $lastSuccessfulTask = $lastSuccessfulTaskResponse.Items[0]
