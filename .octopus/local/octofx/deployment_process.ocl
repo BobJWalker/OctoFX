@@ -263,7 +263,94 @@ step "Auto Rollback" {
                 This step contains some business logic to determine if it is appropriate to rollback
             EOT
         properties = {
-            Octopus.Action.Script.ScriptBody = "Write-Host \"Hello World\""
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                $CommandsToLookFor = "Create Table,Alter Table,Drop Table,Drop View,Create View,Create Function,Drop Function,sp_addrolemember,sp_droprolemember,alter role,Merge,Create Schema,Select,Insert,Update,Delete"
+                
+                $OctopusURL = $OctopusParameters["Approval.Base.Url"]
+                $APIKey = $OctopusParameters["Approval.Api.Key"]
+                $FileExtension = ".html"
+                $SpaceId = $OctopusParameters["Octopus.Space.Id"]
+                $DeploymentId = $OctopusParameters["Octopus.Deployment.Id"]
+                $StatusOfWindowsService = $OctopusParameters["Octopus.Step[Deploy OctoFX Windows Service].Status.Code"]
+                $DeploymentMode = $OctopusParameters["Octopus.Action[Calculate Deployment Mode].Output.DeploymentMode"]
+                $releaseNumberToRollbackTo = $OctopusParameters["Octopus.Release.CurrentForEnvironment.Number"]
+                
+                if ($DeploymentMode -ne "Deploy")
+                {
+                	Write-Highlight "Not doing a deployment, exiting this script"
+                    exit 0
+                }
+                
+                Write-Host "Status of Windows Service Deployment: $StatusOfWindowsService"
+                
+                Write-Host "Commands to look for: $CommandsToLookFor"
+                Write-Host "Octopus Url: $OctopusUrl"
+                Write-Host "SpaceId: $SpaceId"
+                Write-Host "DeploymentId: $DeploymentId"
+                Write-Host "File Extension: $FileExtension"
+                Write-Host "Release Number to Rollback To: $releaseNumberToRollbackTo"
+                
+                $header = @{ "X-Octopus-ApiKey" = $APIKey }
+                
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $artifactUrl = "$OctopusUrl/api/$SpaceId/artifacts?take=2147483647&regarding=$DeploymentId&order=asc"
+                Write-Host "Getting the artifacts from $artifactUrl"
+                $artifactResponse = Invoke-RestMethod $artifactUrl -Headers $header
+                $fileListToCheck = @()
+                
+                foreach ($artifact in $artifactResponse.Items)
+                {
+                    $fileName = $artifact.Filename
+                
+                    if ($fileName.EndsWith($FileExtension))
+                    {    	
+                        Write-Host "The artifact is a SQL Script, downloading"
+                        $artifactId = $artifact.Id
+                        $artifactContentUrl = "$OctopusUrl/api/$SpaceId/artifacts/$artifactId/content"
+                        Write-Host "Pulling the content from $artifactContentUrl"
+                        $fileContent += Invoke-RestMethod $artifactContentUrl -Headers $header
+                        Write-Host "Finished downloading the file $fileName"
+                        
+                        $sqlFileToCheck = @{
+                        	FileName = $fileName;
+                            Content = $fileContent;
+                        }
+                        
+                        $fileListToCheck += $sqlFileToCheck                
+                    }    
+                }
+                
+                $foundSQL = $false
+                
+                if ($fileListToCheck.Length -le 0)
+                {
+                	Write-Highlight "No database artifacts were found"
+                }
+                
+                Write-Host "Looping through all commands"
+                $commandListToCheck = $CommandsToLookFor -split ","
+                foreach ($sqlFile in $fileListToCheck)
+                {    
+                	foreach ($command in $commandListToCheck)
+                    {
+                    	Write-Host "Checking $($sqlFile.FileName) for command $command"
+                    	$foundCommand = $sqlFile.Content -match "$command"
+                    
+                    	if ($foundCommand)
+                        {
+                        	Write-Highlight "$($sqlFile.FileName) has the command '$command'"
+                            $foundSQL = $true
+                        }
+                    }
+                } 
+                
+                if ($foundSQL -eq $true)
+                {
+                	Write-Highlight "Database changes were found, cannot auto rollback"
+                    exit 0
+                }
+                
+            EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
         }
