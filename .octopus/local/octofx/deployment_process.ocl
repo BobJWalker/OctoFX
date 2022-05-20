@@ -274,7 +274,7 @@ step "Check if rollback is needed" {
     action {
         action_type = "Octopus.Script"
         notes = <<-EOT
-                **Runs on Deployments Only**
+                **Runs when previous steps fail**
                 
                 This step contains some business logic to determine if it is appropriate to rollback
             EOT
@@ -287,8 +287,8 @@ step "Check if rollback is needed" {
                 $FileExtension = ".html"
                 $SpaceId = $OctopusParameters["Octopus.Space.Id"]
                 $DeploymentId = $OctopusParameters["Octopus.Deployment.Id"]
-                $StatusOfWindowsService = $OctopusParameters["Octopus.Step[Deploy OctoFX Windows Service].Status.Code"]
-                $StatusOfWebSite = $OctopusParameters["Octopus.Step[Deploy OctoFX Website].Status.Code"]
+                $StatusOfWindowsService = $OctopusParameters["Octopus.Action[Deploy OctoFX Windows Service].Status.Code"]
+                $StatusOfWebSite = $OctopusParameters["Octopus.Action[Deploy OctoFX Website].Status.Code"]
                 $DeploymentMode = $OctopusParameters["Octopus.Action[Calculate Deployment Mode].Output.DeploymentMode"]
                 $releaseNumberToRollbackTo = $OctopusParameters["Octopus.Release.CurrentForEnvironment.Number"]
                 
