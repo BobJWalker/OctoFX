@@ -160,6 +160,22 @@ step "Deploy OctoFX Database" {
     }
 }
 
+step "Force Failure" {
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                Write-Highlight "Forcing a failure!"
+                Exit 1
+            EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+        worker_pool = "Default Worker Pool"
+    }
+}
+
 step "Deploy OctoFX Windows Service" {
     condition = "Variable"
     properties = {
