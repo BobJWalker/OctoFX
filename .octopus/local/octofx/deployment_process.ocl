@@ -253,7 +253,7 @@ step "Deploy OctoFX Website" {
 }
 
 step "Check if rollback is needed" {
-    condition = "Always"
+    condition = "Failure"
 
     action {
         action_type = "Octopus.Script"
@@ -272,6 +272,7 @@ step "Check if rollback is needed" {
                 $SpaceId = $OctopusParameters["Octopus.Space.Id"]
                 $DeploymentId = $OctopusParameters["Octopus.Deployment.Id"]
                 $StatusOfWindowsService = $OctopusParameters["Octopus.Step[Deploy OctoFX Windows Service].Status.Code"]
+                $StatusOfWebSite = $OctopusParameters["Octopus.Step[Deploy OctoFX Website].Status.Code"]
                 $DeploymentMode = $OctopusParameters["Octopus.Action[Calculate Deployment Mode].Output.DeploymentMode"]
                 $releaseNumberToRollbackTo = $OctopusParameters["Octopus.Release.CurrentForEnvironment.Number"]
                 
@@ -282,6 +283,13 @@ step "Check if rollback is needed" {
                 }
                 
                 Write-Host "Status of Windows Service Deployment: $StatusOfWindowsService"
+                Write-Host "Status of Website Deployment: $StatusOfWebSite"
+                
+                if ($StatusOfWindowsService -ne "Pending" -and $StatusOfWindowsService -ne "Skipped" -and $StatusOfWebSite -ne "Pending" -and $StatusOfWebSite -ne "Skipped")
+                {
+                	Write-Highlight "No code was deployed, nothing to rollback.  Exiting."
+                    exit 0
+                }
                 
                 Write-Host "Commands to look for: $CommandsToLookFor"
                 Write-Host "Octopus Url: $OctopusUrl"
