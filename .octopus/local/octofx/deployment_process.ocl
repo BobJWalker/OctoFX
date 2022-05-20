@@ -287,10 +287,11 @@ step "Check if rollback is needed" {
                 $FileExtension = ".html"
                 $SpaceId = $OctopusParameters["Octopus.Space.Id"]
                 $DeploymentId = $OctopusParameters["Octopus.Deployment.Id"]
+                $EnvironmentId = $OctopusParameters["Octopus.Environment.Id"]
+                $ProjectId = $OctopusParameters["Octopus.Project.Id"]
                 $StatusOfWindowsService = $OctopusParameters["Octopus.Action[Deploy OctoFX Windows Service].Status.Code"]
                 $StatusOfWebSite = $OctopusParameters["Octopus.Action[Deploy OctoFX Website].Status.Code"]
                 $DeploymentMode = $OctopusParameters["Octopus.Action[Calculate Deployment Mode].Output.DeploymentMode"]
-                $releaseNumberToRollbackTo = $OctopusParameters["Octopus.Release.CurrentForEnvironment.Number"]
                 
                 if ($DeploymentMode -ne "Deploy")
                 {
@@ -301,7 +302,7 @@ step "Check if rollback is needed" {
                 Write-Host "Status of Windows Service Deployment: $StatusOfWindowsService"
                 Write-Host "Status of Website Deployment: $StatusOfWebSite"
                 
-                if ($StatusOfWindowsService -ne "Pending" -and $StatusOfWindowsService -ne "Skipped" -and $StatusOfWebSite -ne "Pending" -and $StatusOfWebSite -ne "Skipped")
+                if ($StatusOfWindowsService -ne "Succeeded" -and $StatusOfWebSite -ne "Succeeded")
                 {
                 	Write-Highlight "No code was deployed, nothing to rollback.  Exiting."
                     exit 0
@@ -312,7 +313,6 @@ step "Check if rollback is needed" {
                 Write-Host "SpaceId: $SpaceId"
                 Write-Host "DeploymentId: $DeploymentId"
                 Write-Host "File Extension: $FileExtension"
-                Write-Host "Release Number to Rollback To: $releaseNumberToRollbackTo"
                 
                 $header = @{ "X-Octopus-ApiKey" = $APIKey }
                 
@@ -374,6 +374,21 @@ step "Check if rollback is needed" {
                     exit 0
                 }
                 
+                $lastSuccessfulTaskUrl = "$OctopusUrl/api/tasks?skip=0&take=2&environment=$environmentId&project=$projectId&states=Success&spaces=$spaceId&includeSystem=false"
+                Write-Host "Querying the url $lastSuccessfulTaskUrl to find the last successful deployment that went to this environment"
+                $lastSuccessfulTaskResponse = Invoke-RestMethod $lastSuccessfulTaskUrl -headers $header
+                $lastSuccessfulTask = $lastSuccessfulTaskResponse.Items[0]
+                
+                $deploymentId = $lastSuccessfulTask.Arguments.DeploymentId
+                Write-Host "Pulling back the deployment details for $($lastSuccessfulTask.Id) for deployment $deploymentId"
+                $lastSuccessfulDeployment = Invoke-RestMethod "$OctopusUrl/api/$SpaceId/deployments/$deploymentId" -headers $header
+                $releaseId = $lastSuccessfulDeployment.ReleaseId
+                
+                Write-host "Pulling back the release information for $releaseId"
+                $lastSuccessfulRelease = Invoke-RestMethod "$OctopusUrl/api/$SpaceId/releases/$releaseId" -headers $header
+                $version = $lastSuccessfulRelease.Version
+                
+                Write-Highlight "Rolling back to $version"
             EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
