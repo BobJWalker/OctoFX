@@ -389,7 +389,7 @@ step "Check if rollback is needed" {
                 $version = $lastSuccessfulRelease.Version
                 
                 Write-Highlight "Rolling back to $version"
-                octo deploy-release --project=$projectId --deployTo=$environmentId --releaseNumber=$version
+                octo deploy-release --project=$projectId --deployTo=$environmentId --releaseNumber=$version --server="$octopusUrl" --apiKey=$apiKey
             EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
