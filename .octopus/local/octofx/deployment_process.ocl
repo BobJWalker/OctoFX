@@ -252,6 +252,25 @@ step "Deploy OctoFX Website" {
     }
 }
 
+step "Auto Rollback" {
+    condition = "Always"
+
+    action {
+        action_type = "Octopus.Script"
+        notes = <<-EOT
+                **Runs on Deployments Only**
+                
+                This step contains some business logic to determine if it is appropriate to rollback
+            EOT
+        properties = {
+            Octopus.Action.Script.ScriptBody = "Write-Host \"Hello World\""
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+        worker_pool = "Default Worker Pool"
+    }
+}
+
 step "Notify Stakeholders" {
     condition = "Always"
 
