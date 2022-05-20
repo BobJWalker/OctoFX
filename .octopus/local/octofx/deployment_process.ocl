@@ -276,7 +276,13 @@ step "Check if rollback is needed" {
         notes = <<-EOT
                 **Runs when previous steps fail**
                 
-                This step contains some business logic to determine if it is appropriate to rollback
+                This step contains some business logic to determine if it is appropriate to rollback to a previous version.  It will only rollback if:
+                
+                - Deployment Mode is **Deploy**
+                - No database changes were found in the delta script
+                - The web service or the website was deployed
+                
+                If those conditions are not met, it will not trigger an automatic rollback.
             EOT
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
