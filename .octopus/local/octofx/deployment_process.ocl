@@ -62,7 +62,7 @@ step "Generate Database Delta Report" {
             EOT
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
-                $packagePath = $OctopusParameters["Octopus.Action.Package[sakila.mssql.dbup.db].ExtractedPath"]
+                $packagePath = $OctopusParameters["Octopus.Action.Package[OctoFX.Database].PackageVersion"]
                 $connectionString = $OctopusParameters["Project.Database.ConnectionString"]
                 $reportPath = $OctopusParameters["Project.HtmlReport.Location"]
                 $environmentName = $OctopusParameters["Octopus.Environment.Name"]
@@ -83,10 +83,10 @@ step "Generate Database Delta Report" {
         }
         worker_pool = "Default Worker Pool"
 
-        packages "sakila.mssql.dbup.db" {
+        packages "OctoFX.Database" {
             acquisition_location = "Server"
             feed = "Octopus Server (built-in)"
-            package_id = "sakila.mssql.dbup.db"
+            package_id = "OctoFX.Database"
             properties = {
                 Extract = "True"
                 Purpose = ""
@@ -134,7 +134,7 @@ step "Deploy OctoFX Database" {
             EOT
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
-                $packagePath = $OctopusParameters["Octopus.Action.Package[sakila.mssql.dbup.db].ExtractedPath"]
+                $packagePath = $OctopusParameters["Octopus.Action.Package[OctoFX.Database].ExtractedPath"]
                 $connectionString = $OctopusParameters["Project.Database.ConnectionString"]
                 
                 $dllToRun = "$packagePath/sakila.mssql.dbup.dll"
@@ -147,10 +147,10 @@ step "Deploy OctoFX Database" {
         }
         worker_pool = "Default Worker Pool"
 
-        packages "sakila.mssql.dbup.db" {
+        packages "OctoFX.Database" {
             acquisition_location = "Server"
             feed = "Octopus Server (built-in)"
-            package_id = "sakila.mssql.dbup.db"
+            package_id = "OctoFX.Database"
             properties = {
                 Extract = "True"
                 Purpose = ""
