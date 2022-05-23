@@ -62,7 +62,7 @@ step "Generate Database Delta Report" {
             EOT
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
-                $packagePath = $OctopusParameters["Octopus.Action.Package[OctoFX.Database].PackageVersion"]
+                $packagePath = $OctopusParameters["Octopus.Action.Package[OctoFX.Database].ExtractedPath"]
                 $connectionString = $OctopusParameters["Project.Database.ConnectionString"]
                 $reportPath = $OctopusParameters["Project.HtmlReport.Location"]
                 $environmentName = $OctopusParameters["Octopus.Environment.Name"]
