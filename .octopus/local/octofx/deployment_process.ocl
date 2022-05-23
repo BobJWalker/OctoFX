@@ -299,6 +299,7 @@ step "Check if rollback is needed" {
                 $StatusOfWindowsService = $OctopusParameters["Octopus.Action[Deploy OctoFX Windows Service].Status.Code"]
                 $StatusOfWebSite = $OctopusParameters["Octopus.Action[Deploy OctoFX Website].Status.Code"]
                 $DeploymentMode = $OctopusParameters["Octopus.Action[Calculate Deployment Mode].Output.DeploymentMode"]
+                $ApprovalId = $OctopusParameters["Octopus.ServiceNow.ChangeRequest.Number"]
                 
                 if ($DeploymentMode -ne "Deploy")
                 {
@@ -396,7 +397,7 @@ step "Check if rollback is needed" {
                 $version = $lastSuccessfulRelease.Version
                 
                 Write-Highlight "Rolling back to $version"
-                octo deploy-release --project=$projectId --deployTo=$environmentId --releaseNumber=$version --server="$octopusUrl" --apiKey=$apiKey
+                octo deploy-release --project=$projectId --deployTo=$environmentId --releaseNumber=$version --server="$octopusUrl" --apiKey=$apiKey --variable "Octopus.ServiceNow.ChangeRequest.Number:$ApprovalId"
             EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
