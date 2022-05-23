@@ -67,6 +67,7 @@ step "Generate Database Delta Report" {
                 $reportPath = $OctopusParameters["Project.HtmlReport.Location"]
                 $environmentName = $OctopusParameters["Octopus.Environment.Name"]
                 
+                Write-Host "The package path is: $packagePath"
                 $dllToRun = "$packagePath/sakila.mssql.dbup.dll"
                 $generatedReport = "$reportPath/UpgradeReport.html"
                 
@@ -137,6 +138,7 @@ step "Deploy OctoFX Database" {
                 $packagePath = $OctopusParameters["Octopus.Action.Package[OctoFX.Database].ExtractedPath"]
                 $connectionString = $OctopusParameters["Project.Database.ConnectionString"]
                 
+                Write-Host "The package path is: $packagePath"
                 $dllToRun = "$packagePath/sakila.mssql.dbup.dll"
                 
                 # How you run this .NET core app
@@ -207,6 +209,7 @@ step "Force Failure" {
 
     action {
         action_type = "Octopus.Script"
+        is_disabled = true
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
                 Write-Highlight "Forcing a failure!"
