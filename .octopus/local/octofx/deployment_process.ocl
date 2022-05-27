@@ -209,7 +209,7 @@ step "Force Failure" {
 
     action {
         action_type = "Octopus.Script"
-        is_disabled = true
+        environments = ["Production"]
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
                 Write-Highlight "Forcing a failure!"
