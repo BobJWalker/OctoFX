@@ -209,7 +209,7 @@ step "Force Failure" {
 
     action {
         action_type = "Octopus.Script"
-        environments = ["Production"]
+        environments = ["Production", "Development"]
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
                 Write-Highlight "Forcing a failure!"
@@ -323,6 +323,7 @@ step "Check if rollback is needed" {
                 Write-Host "SpaceId: $SpaceId"
                 Write-Host "DeploymentId: $DeploymentId"
                 Write-Host "File Extension: $FileExtension"
+                Write-Host "Approval ID: $ApprovalId"
                 
                 $header = @{ "X-Octopus-ApiKey" = $APIKey }
                 
@@ -399,7 +400,7 @@ step "Check if rollback is needed" {
                 $version = $lastSuccessfulRelease.Version
                 
                 Write-Highlight "Rolling back to $version"
-                octo deploy-release --project=$projectId --deployTo=$environmentId --releaseNumber=$version --server="$octopusUrl" --apiKey=$apiKey --variable "Octopus.ServiceNow.ChangeRequest.Number:$ApprovalId"
+                octo deploy-release --project=$projectId --deployTo=$environmentId --releaseNumber=$version --server="$octopusUrl" --apiKey=$apiKey --variable "ServiceNow Change Request Number:$ApprovalId"
             EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
